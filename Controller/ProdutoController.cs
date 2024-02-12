@@ -10,7 +10,7 @@ namespace ApiCatalogo.Controller
     [ApiController]
     public class ProdutoController : ControllerBase
     {
-        private AppDbContext _Context;
+        private readonly AppDbContext _Context;
         public ProdutoController(AppDbContext Context)
         {
             _Context = Context;

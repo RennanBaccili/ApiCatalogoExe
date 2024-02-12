@@ -30,6 +30,7 @@ public class Produto
     public DateTime DataCadastro { get; set; }
 
     //foreign key
+    [ForeignKey("CategoriaId")]
     public int CategoriaId { get; set; }
     // Navigation property
     public Categoria? Categoria { get; set; }
