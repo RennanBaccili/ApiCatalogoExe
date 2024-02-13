@@ -1,4 +1,5 @@
 using ApiCatalogo.Context;
+using ApiCatalogo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -21,6 +22,10 @@ string? mysqlConnection = builder.Configuration.GetConnectionString("DefaultConn
 // Register the database context as a service and configure it to use MySQL.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySQL(mysqlConnection));
+
+
+//Transient:  Cada vez que alguma classe solicitar esse serviço sera gerado uma nova instancia de objeto
+builder.Services.AddTransient<IService, Service>();
 
 var app = builder.Build();
 

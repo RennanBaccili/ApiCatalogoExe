@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ApiCatalogo.Context;
 using ApiCatalogo.Models;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using ApiCatalogo.Services;
 
 namespace ApiCatalogo.Controller
 {
@@ -32,11 +34,22 @@ namespace ApiCatalogo.Controller
                 .ToListAsync();  // Converte a consulta em uma lista assíncrona        
         }
 
-            // GET: api/Categoria/5
-            [HttpGet("{id}")]
-        public async Task<ActionResult<Categoria>> GetCategoria(int id)
+
+        // Neste método, o parâmetro name é vai ser utilizado pelo meu service para retornar a saudação
+        [HttpGet("UsandoServices/{name}")]
+        public ActionResult<string> GetSalvacaoTesteService([FromServices] IService service, string name)
         {
-            var categoria = await _context.Categorias.FindAsync(id);
+            return service.Saudacao(name);
+        }
+
+
+            // GET: api/Categoria/5
+        [HttpGet("{id:int:min(1)}")]
+        public async Task<ActionResult<Categoria>> GetCategoria(int id,[BindRequired] string name)
+        {
+
+            string Name = name;
+            var categoria = await _context.Categorias.AsNoTracking().FirstOrDefaultAsync(c => c.CategoriaId == id);
 
             if (categoria == null)
             {
