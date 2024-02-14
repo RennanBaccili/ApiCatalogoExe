@@ -1,4 +1,6 @@
 using ApiCatalogo.Context;
+using ApiCatalogo.Exceptions;
+using ApiCatalogo.Logging;
 using ApiCatalogo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -27,6 +29,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 //Transient:  Cada vez que alguma classe solicitar esse serviço sera gerado uma nova instancia de objeto
 builder.Services.AddTransient<IService, Service>();
 
+builder.Logging.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration
+{
+    LogLevel = LogLevel.Information
+}));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -34,6 +41,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.ConfigureExceptionHandler();
 }
 
 app.UseHttpsRedirection();
