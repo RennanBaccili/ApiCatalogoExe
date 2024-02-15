@@ -12,14 +12,15 @@ namespace ApiCatalogo.Controller
     [ApiController]
     public class ProdutoController : ControllerBase
     {
-        private readonly AppDbContext _Context;
+        private readonly IRepository<Produto> _Repository;
         private readonly IConfiguration _Configuration;
         private readonly IProdutoRepository _produtoRepository;
-        public ProdutoController(AppDbContext Context, IConfiguration Configuration, IProdutoRepository produtoRepository)
+
+        public ProdutoController(IConfiguration Configuration, IProdutoRepository produtoRepository, IRepository<Produto> repository)
         {
-            _Context = Context;
             _Configuration = Configuration;
             _produtoRepository = produtoRepository;
+            _Repository = repository;
         }
 
         [HttpGet("LerArquivoConfiguracao")]
@@ -36,7 +37,7 @@ namespace ApiCatalogo.Controller
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Produto>>> GetAllProduto()
         {
-            var produtos = await _produtoRepository.GetAllProdutosAsync();
+            var produtos = await _Repository.GetAllAsync();
             return Ok(produtos);
         }
 
@@ -44,8 +45,7 @@ namespace ApiCatalogo.Controller
         public ActionResult<Produto> GetProdutoById(int id)
         {
         
-            throw new Exception("Erro ao tentar obter os produtos do banco de dados");
-            var produto = _Context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
+            var produto = _Repository.GetAsync(p => p.ProdutoId == id);
             if (produto == null)
             {
                 return NotFound($"O produto com id = {id} não foi encontrado");
@@ -56,21 +56,22 @@ namespace ApiCatalogo.Controller
         [HttpPost]
         public async Task<ActionResult<Produto>> PostProduct(Produto produto)
         {
-            var novoProduto = await _produtoRepository.AddProdutoAsync(produto);
+            var novoProduto = await _Repository.CreateAsync(produto);
             return Ok(novoProduto);
         }
 
         [HttpPut]
         public async Task<ActionResult<Produto>> PutProduct(Produto produto)
         {
-            await _produtoRepository.UpdateProdutoAsync(produto);
+            await _Repository.UpdateAsync(produto);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult<Produto>> DeleteProduct(int id)
         {
-            await _produtoRepository.DeleteProdutoAsync(id);
+            var entity = await _Repository.GetAsync(p => p.ProdutoId == id);
+            await _Repository.DeleteAsync(entity);
             return NoContent();
         }
     }

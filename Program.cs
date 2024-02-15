@@ -5,6 +5,7 @@ using ApiCatalogo.Repository;
 using ApiCatalogo.Repository.IRepository;
 using ApiCatalogo.Services;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol.Core.Types;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddTransient<IService, Service>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
 
 builder.Logging.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration
 {
