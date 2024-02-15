@@ -1,5 +1,6 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Repository.IRepository;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace ApiCatalogo.Repository
@@ -12,35 +13,34 @@ namespace ApiCatalogo.Repository
             _context = contexto;
         }
 
-        public IEnumerable<T> GetAll()
+        public async Task<IEnumerable<T>> GetAllAsync()
         {
-            return _context.Set<T>().ToList();
+            return await _context.Set<T>().ToListAsync();
         }
 
-        public T? Get(Expression<Func<T, bool>> predicate)
+        public async Task<T?> GetAsync(Expression<Func<T, bool>> predicate)
         {
-            return _context.Set<T>().Where(predicate).FirstOrDefault();
+            return await _context.Set<T>().Where(predicate).FirstOrDefaultAsync();
         }
 
-        public T Create(T entity)
+        public async Task<T> CreateAsync(T entity)
         {
-            _context.Set<T>().Add(entity);
-            _context.SaveChanges();
+            await _context.Set<T>().AddAsync(entity);
+            await _context.SaveChangesAsync();
             return entity;
         }
 
-        public T Update(T entity)
+        public async Task<T> UpdateAsync(T entity)
         {
             _context.Set<T>().Update(entity);
-            //_context.Entry(entity).State = EntityState.Modified;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return entity;
         }
 
-        public T Delete(T entity)
+        public async Task<T> DeleteAsync(T entity)
         {
             _context.Set<T>().Remove(entity);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return entity;
         }
     }
