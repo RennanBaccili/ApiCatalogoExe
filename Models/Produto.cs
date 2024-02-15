@@ -15,7 +15,7 @@ public class Produto : IValidatableObject
     [Required]
     [StringLength(80)]
     [PrimeiraLetraMaiuscula]
-    public string? Nome { get; set; }
+    public string? Nome { get; set; } 
 
     [Required]
     [StringLength(300)]

@@ -9,6 +9,8 @@ using ApiCatalogo.Context;
 using ApiCatalogo.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using ApiCatalogo.Services;
+using ApiCatalogo.Repository.IRepository;
+using ApiCatalogo.Repository;
 
 namespace ApiCatalogo.Controller
 {
@@ -16,22 +18,19 @@ namespace ApiCatalogo.Controller
     [ApiController]
     public class CategoriaController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ICategoriaRepository _categoriaRepository;
         // var produtos =_context.Produtos.AsNoTracking().ToList();
-        public CategoriaController(AppDbContext context)
+        public CategoriaController(ICategoriaRepository CategoriaRepository)
         {
-            _context = context;
+            _categoriaRepository = CategoriaRepository;
         }
 
         // GET: api/Categoria
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Categoria>>> GetCategorias()
+        public async Task<ActionResult<IEnumerable<Categoria>>> listCategorias()
         {
-            return await _context.Categorias
-                .Include(c => c.Produtos)  // Inclui os produtos relacionados a cada categoria
-                .Where(c => c.CategoriaId <= 5)  // Filtra as categorias cujo CategoriaId é menor ou igual a 5
-                .AsNoTracking()  // Indica que as entidades retornadas não precisam ser rastreadas
-                .ToListAsync();  // Converte a consulta em uma lista assíncrona        
+            var categorias = await _categoriaRepository.GetCategorias();
+            return Ok(categorias);
         }
 
 
@@ -45,49 +44,23 @@ namespace ApiCatalogo.Controller
 
             // GET: api/Categoria/5
         [HttpGet("{id:int:min(1)}")]
-        public async Task<ActionResult<Categoria>> GetCategoria(int id,[BindRequired] string name)
+        public async Task<ActionResult<Categoria>> GetCategoriaController(int id,[BindRequired] string name)
         {
 
             string Name = name;
-            var categoria = await _context.Categorias.AsNoTracking().FirstOrDefaultAsync(c => c.CategoriaId == id);
+            var categoria = _categoriaRepository.GetCategoria(id);
 
-            if (categoria == null)
-            {
-                return NotFound();
-            }
-
-            return categoria;
+         
+            return Ok(categoria);
         }
 
         // PUT: api/Categoria/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCategoria(int id, Categoria categoria)
+        public async Task<IActionResult> PutCategoria(Categoria categoria)
         {
-            if (id != categoria.CategoriaId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(categoria).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CategoriaExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            await _categoriaRepository.UpdateCategoria(categoria);
+            return NoContent(); // Atualização bem-sucedida, retorna um 204 No Content
         }
 
         // POST: api/Categoria
@@ -95,8 +68,7 @@ namespace ApiCatalogo.Controller
         [HttpPost]
         public async Task<ActionResult<Categoria>> PostCategoria(Categoria categoria)
         {
-            _context.Categorias.Add(categoria);
-            await _context.SaveChangesAsync();
+            await _categoriaRepository.CreateCategoria(categoria);
 
             return CreatedAtAction("GetCategoria", new { id = categoria.CategoriaId }, categoria);
         }
@@ -105,21 +77,15 @@ namespace ApiCatalogo.Controller
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategoria(int id)
         {
-            var categoria = await _context.Categorias.FindAsync(id);
-            if (categoria == null)
-            {
-                return NotFound();
-            }
-
-            _context.Categorias.Remove(categoria);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+           await _categoriaRepository.DeleteCategoria(id);
+           return NoContent();
         }
 
-        private bool CategoriaExists(int id)
+        [HttpGet("{name}")]
+        public async Task<ActionResult<Categoria>> CategoriaPorNome(String name)
         {
-            return _context.Categorias.Any(e => e.CategoriaId == id);
+            var categoria = await _categoriaRepository.GetCategoriaPorNome(name);
+            return Ok(categoria);
         }
     }
 }

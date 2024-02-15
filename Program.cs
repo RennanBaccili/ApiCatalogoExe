@@ -1,6 +1,8 @@
 using ApiCatalogo.Context;
 using ApiCatalogo.Exceptions;
 using ApiCatalogo.Logging;
+using ApiCatalogo.Repository;
+using ApiCatalogo.Repository.IRepository;
 using ApiCatalogo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -27,6 +29,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 //Transient:  Cada vez que alguma classe solicitar esse serviço sera gerado uma nova instancia de objeto
 builder.Services.AddTransient<IService, Service>();
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
 
 builder.Logging.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration
 {
