@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using ApiCatalogo.Services;
 using ApiCatalogo.Repository.IRepository;
 using ApiCatalogo.Repository;
+using ApiCatalogo.DTOs;
+using ApiCatalogo.DTOs.Mappins;
 
 namespace ApiCatalogo.Controller
 {
@@ -30,10 +32,11 @@ namespace ApiCatalogo.Controller
 
         // GET: api/Categoria
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Categoria>>> listCategorias()
+        public async Task<ActionResult<IEnumerable<CategoriaDTO>>> listCategorias()
         {
             var categorias = await _unitOfWork.CategoriaRepository.GetCategorias();
-            return Ok(categorias);
+            var categoriasDTO = categorias.ToCategoriaDTOList();
+            return Ok(categoriasDTO);
         }
 
 
@@ -46,25 +49,29 @@ namespace ApiCatalogo.Controller
 
         // GET: api/Categoria/5
         [HttpGet("{id:int:min(1)}")]
-        public async Task<ActionResult<Categoria>> GetCategoriaController(int id)
+        public async Task<ActionResult<CategoriaDTO>> GetCategoriaController(int id)
         {
+            //Busco Categoria pelo Id no banco de dados
             var categoria = await _unitOfWork.CategoriaRepository.GetAsync(x => x.CategoriaId == id);
             if (categoria == null)
             {
                 return NotFound();
             }
-            return Ok(categoria);
+            //devo reornar um DTO
+            //transformo uma categoria em uma categoriaDTO
+            var categoriaDTO = categoria.ToCategoriaDTO();
+            //retorno a categoriaDTO
+            return Ok(categoriaDTO);
         }
 
         // PUT: api/Categoria/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCategoria(int id, Categoria categoria)
+        public async Task<ActionResult<CategoriaDTO>> PutCategoria(int id, CategoriaDTO categoriaDTO)
         {
-            if (id != categoria.CategoriaId)
-            {
-                return BadRequest();
-            }
+        
+            //agorra transformo o DTO em uma categoria para envia-la para o banco de dados
+            var categoria = categoriaDTO.CategoriaDTO();
 
             await _unitOfWork.CategoriaRepository.UpdateAsync(categoria);
             _unitOfWork.Commit();
@@ -75,11 +82,18 @@ namespace ApiCatalogo.Controller
         // POST: api/Categoria
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Categoria>> PostCategoria(Categoria categoria)
+        public async Task<ActionResult<CategoriaDTO>> PostCategoria(CategoriaDTO categoriaDTO)
         {
+            var categoria = new Categoria()
+            {
+                Nome = categoriaDTO.Nome,
+                imagemUrl = categoriaDTO.imagemUrl
+            };
+
             await _unitOfWork.CategoriaRepository.CreateAsync(categoria);
             _unitOfWork.Commit();
-            return CreatedAtAction("GetCategoria", new { id = categoria.CategoriaId }, categoria);
+
+            return Ok(categoria.ToCategoriaDTO);
         }
 
         // DELETE: api/Categoria/5
@@ -98,7 +112,7 @@ namespace ApiCatalogo.Controller
         }
 
         [HttpGet("nome/{name}")]
-        public async Task<ActionResult<Categoria>> CategoriaPorNome(string name)
+        public async Task<ActionResult<CategoriaDTO>> CategoriaPorNome(string name)
         {
             var categoria = await _unitOfWork.CategoriaRepository.GetCategoriaPorNome(name);
             if (categoria == null)
@@ -106,8 +120,10 @@ namespace ApiCatalogo.Controller
                 return NotFound();
             }
 
-            return Ok(categoria);
+            return Ok(categoria.ToCategoriaDTO);
         }
+
+
 
     }
 }
