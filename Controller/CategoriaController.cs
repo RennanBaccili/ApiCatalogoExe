@@ -13,6 +13,7 @@ using ApiCatalogo.Repository.IRepository;
 using ApiCatalogo.Repository;
 using ApiCatalogo.DTOs;
 using ApiCatalogo.DTOs.Mappins;
+using ApiCatalogo.Pagination;
 
 namespace ApiCatalogo.Controller
 {
@@ -39,6 +40,26 @@ namespace ApiCatalogo.Controller
             return Ok(categoriasDTO);
         }
 
+        // GET: api/Categoria
+        [HttpGet("Pagination")]
+        public async Task<IActionResult> GetCategoriasPagination([FromQuery] CategoriaParameters categoriaParameters)
+        {
+            var categorias = await _unitOfWork.CategoriaRepository.GetAllCategoriasAsync(categoriaParameters);
+           
+            var metada = new
+            {
+                categorias.TotalCount,
+                categorias.PageSize,
+                categorias.CurrentPage,
+                categorias.TotalPages,
+                categorias.HasNext,
+                categorias.HasPrevious
+            };
+            
+            Response.Headers.Append("X-Pagination", Newtonsoft.Json.JsonConvert.SerializeObject(metada));
+            
+            return Ok(categorias.ToCategoriaDTOList());
+        }
 
         // Neste método, o parâmetro name é vai ser utilizado pelo meu service para retornar a saudação
         [HttpGet("UsandoServices/{name}")]

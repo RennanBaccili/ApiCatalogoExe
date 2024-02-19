@@ -1,4 +1,5 @@
 ﻿using ApiCatalogo.Models;
+using ApiCatalogo.Pagination;
 
 namespace ApiCatalogo.Repository.IRepository
 {
@@ -6,5 +7,7 @@ namespace ApiCatalogo.Repository.IRepository
     {
         Task<Categoria> GetCategoriaPorNome(string nomeCategoria);
         Task<IEnumerable<Categoria>> GetCategorias();
+
+        Task<PagedList<Categoria>> GetAllCategoriasAsync(CategoriaParameters categoriaParameters);
     }
 }

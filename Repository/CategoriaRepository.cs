@@ -1,5 +1,6 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
+using ApiCatalogo.Pagination;
 using ApiCatalogo.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,21 @@ namespace ApiCatalogo.Repository
 
         public CategoriaRepository(AppDbContext context) :base(context)
         {
+            
+        }
+
+        public async Task<PagedList<Categoria>> GetAllCategoriasAsync(CategoriaParameters categoriasParams)
+        {
+            var catergorias = await GetAllAsync();
+
+            // Ordena as categorias e converte para IQueryable.
+            var catergoriasQuery = catergorias
+                .OrderBy(c => c.CategoriaId)
+                .AsQueryable(); // Certifique-se de chamar AsQueryable() aqui para converter IEnumerable para IQueryable.
+
+            // Agora, você pode passar categoriasQuery para o método ToPagedList sem problemas.
+            var categoriasOrdenadas = PagedList<Categoria>.ToPagedList(catergoriasQuery, categoriasParams.PageNumber, categoriasParams.PageSize);
+            return categoriasOrdenadas; // Retorne o resultado diretamente, não há necessidade de chamar ToPagedList novamente.
         }
 
         public async Task<Categoria> GetCategoriaPorNome(string nomeCategoria)
