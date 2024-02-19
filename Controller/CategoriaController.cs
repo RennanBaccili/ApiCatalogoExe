@@ -122,8 +122,5 @@ namespace ApiCatalogo.Controller
 
             return Ok(categoria.ToCategoriaDTO);
         }
-
-
-
     }
 }

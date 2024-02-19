@@ -1,4 +1,5 @@
 using ApiCatalogo.Context;
+using ApiCatalogo.DTOs.Mappins;
 using ApiCatalogo.Exceptions;
 using ApiCatalogo.Logging;
 using ApiCatalogo.Repository;
@@ -14,7 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Ativa os constroladores da API
 builder.Services.AddControllers(options => options.Filters.Add(typeof(ApiExceptionFilter)))
                 .AddJsonOptions(options =>
-                { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; });
+                { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; })
+                .AddNewtonsoftJson();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -34,6 +36,7 @@ builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddAutoMapper(typeof(ProdutoDTOMappingProfile));
 
 
 builder.Logging.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration
