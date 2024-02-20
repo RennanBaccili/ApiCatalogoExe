@@ -14,6 +14,7 @@ using ApiCatalogo.Repository;
 using ApiCatalogo.DTOs;
 using ApiCatalogo.DTOs.Mappins;
 using ApiCatalogo.Pagination;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ApiCatalogo.Controller
 {
@@ -33,6 +34,7 @@ namespace ApiCatalogo.Controller
 
         // GET: api/Categoria
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<CategoriaDTO>>> listCategorias()
         {
             var categorias = await _unitOfWork.CategoriaRepository.GetCategorias();
