@@ -6,6 +6,7 @@ using ApiCatalogo.Models;
 using ApiCatalogo.Repository;
 using ApiCatalogo.Repository.IRepository;
 using ApiCatalogo.Services;
+using ApiCatalogo.Services.AuthenticationsServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -43,12 +44,11 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(ProdutoDTOMappingProfile));
 
-
+// --- Configurações de Segurança
 
 // Recupera a chave secreta da configuração ou lança uma exceção se não estiver definida
 var secretKey = builder.Configuration["JWT:SecretKey"]
     ?? throw new ArgumentException("Invalid secret key!");
-
 // Adiciona serviços de autenticação ao contêiner de injeção de dependência
 builder.Services.AddAuthentication(options =>
 {
@@ -84,6 +84,7 @@ builder.Services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes(secretKey))
     };
 });
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
