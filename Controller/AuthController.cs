@@ -1,10 +1,12 @@
 ﻿using ApiCatalogo.DTOs.AuthenticationsDTO;
 using ApiCatalogo.Models;
 using ApiCatalogo.Services.AuthenticationsServices;
+using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -23,16 +25,54 @@ public class AuthController : ControllerBase
     // IConfiguration é para acessar o appsettings.json
     private readonly IConfiguration _config;
 
+    private readonly ILogger<AuthController> _logger;
+
+
     public AuthController(ITokenService tokenService,
                           RoleManager<IdentityRole> roleManager,
                           UserManager<ApplicationUser> userManager,
-                          IConfiguration config)
+                          IConfiguration config,
+                          ILogger<AuthController> logger)
     {
         _tokenService = tokenService;
         _roleManager = roleManager;
         _userManager = userManager;
         _config = config;
+        _logger = logger;
     }
+
+    [HttpGet]
+    public async Task<IActionResult> findAllUsersWithRoles()
+    {
+        var usersWithRoles = new List<UserWithRolesDto>();
+
+        var users = await _userManager.Users.ToListAsync();
+
+        foreach (var user in users)
+        {
+            // Esta chamada deve retornar uma lista vazia se não houver roles, em vez de null.
+            var userRoles = await _userManager.GetRolesAsync(user) ?? new List<string>();
+            var userWithRoles = new UserWithRolesDto
+            {
+                UserId = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                Roles = userRoles
+            };
+            usersWithRoles.Add(userWithRoles);
+        }
+
+        return Ok(usersWithRoles);
+    }
+
+    [HttpGet]
+    [Route("GetRoles")]
+    public async Task<IActionResult> GetRoles()
+    {
+        var roles = await _roleManager.Roles.ToListAsync();
+        return Ok(roles);
+    }
+
 
     [HttpPost]
     [Route("Login")]
@@ -87,10 +127,11 @@ public class AuthController : ControllerBase
     {
         // Tenta encontrar um usuário existente com o mesmo nome de usuário.
         var userExists = await _userManager.FindByNameAsync(model.Username!);
+        var emailExists = await _userManager.FindByEmailAsync(model.Email!);
         // Se um usuário com esse nome de usuário já existe, retorna um erro 500.
-        if (userExists is not null)
+        if (userExists is not null || emailExists is not null)
             return StatusCode(StatusCodes.Status500InternalServerError,
-                               new ResponseModel { Status = "Error", Message = "User already exists!" });
+                               new ResponseModel { Status = "Error", Message = "User or Email already exists!" });
 
         // Cria uma nova instância de ApplicationUser e define suas propriedades.
         ApplicationUser user = new()
@@ -174,5 +215,57 @@ public class AuthController : ControllerBase
         user.RefreshToken = null;
         await _userManager.UpdateAsync(user);
         return Ok("Refresh Token has been revoked");
+    }
+
+    [HttpPost]
+    [Route("CreateRole")]
+    public async Task<IActionResult> CreateRole(string roleName)
+    {
+        roleName = roleName.ToUpper();
+        var roleExist = await _roleManager.RoleExistsAsync(roleName);
+        if (!roleExist)
+        {
+            var roleResult = await _roleManager.CreateAsync(new IdentityRole(roleName));
+
+            if (roleResult.Succeeded)
+            {
+                _logger.LogInformation(1, "Roles Added");
+                return StatusCode(StatusCodes.Status200OK,
+                    new ResponseModel { Status = "Success", Message = $"Role {roleName} added successfully" });
+            }
+            else
+            {
+                _logger.LogInformation(2, "Error");
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    new ResponseModel { Status = "Error", Message = $"Issue adding the new {roleName} role" });
+            }
+        }
+        return StatusCode(StatusCodes.Status400BadRequest,
+            new ResponseModel { Status = "Error", Message = "Role already exist." });
+    }
+    [HttpPost]
+    [Route("AddUserToRole")]
+    public async Task<IActionResult> AddUserToRole(string email, string roleName)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        roleName = roleName.ToUpper();
+        if (user != null)
+        {
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+
+            if (result.Succeeded)
+            {
+                _logger.LogInformation(1, $"User {user.Email} added to the {roleName} role");
+                return StatusCode(StatusCodes.Status200OK,
+                    new ResponseModel { Status = "Success", Message = $"User {user.Email} added to the {roleName} role" });
+            }
+            else
+            {
+                _logger.LogInformation(1, $"Error: Unable to add user {user.Email} to the {roleName} role");
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    new ResponseModel { Status = "Error", Message = $"Error: Unable to add user {user.Email} to the {roleName} role" });
+            }
+        }
+        return BadRequest(new { error = "Unable to find user" });
     }
 }

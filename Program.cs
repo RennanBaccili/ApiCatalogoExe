@@ -23,7 +23,6 @@ builder.Services.AddControllers(options => options.Filters.Add(typeof(ApiExcepti
                 .AddJsonOptions(options =>
                 { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; })
                 .AddNewtonsoftJson();
-
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -89,6 +88,16 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireSuperAdministratorRole",
+                      policy => policy.RequireRole("SUPERADMIN"));
+    options.AddPolicy("RequireAdministratorRole",
+               policy => policy.RequireRole("ADMIN"));
+    options.AddPolicy("RequireUserRole",
+               policy => policy.RequireRole("USER"));
+});
 
 // --- Fim das Configurações de Segurança
 
